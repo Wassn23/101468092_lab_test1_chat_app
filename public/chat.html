@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Chat Room</title>
+</head>
+<body>
+  <h2>Chat App</h2>
+
+  <input id="username" placeholder="Username" />
+  <input id="room" placeholder="Room" />
+  <button onclick="joinRoom()">Join Room</button>
+
+  <div id="chat"></div>
+
+  <input id="message" placeholder="Message" />
+  <button onclick="sendMessage()">Send</button>
+
+  <p id="typing"></p>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+
+    function joinRoom() {
+      const room = document.getElementById("room").value;
+      socket.emit("joinRoom", room);
+    }
+
+    function sendMessage() {
+      const username = document.getElementById("username").value;
+      const room = document.getElementById("room").value;
+      const message = document.getElementById("message").value;
+
+      socket.emit("sendMessage", {
+        room,
+        username,
+        message
+      });
+
+      document.getElementById("message").value = "";
+    }
+
+    socket.on("receiveMessage", (data) => {
+      const chat = document.getElementById("chat");
+      chat.innerHTML += `<p><strong>${data.username}:</strong> ${data.message}</p>`;
+    });
+
+    socket.on("loadMessages", (messages) => {
+  const chat = document.getElementById("chat");
+  chat.innerHTML = "";
+
+  messages.forEach(msg => {
+    chat.innerHTML += `<p><strong>${msg.from_user}:</strong> ${msg.message}</p>`;
+  });
+});
+
+
+  document.getElementById("message").addEventListener("input", () => {
+  const username = document.getElementById("username").value;
+  const room = document.getElementById("room").value;
+
+  if (username && room) {
+    socket.emit("typing", { room, username });
+  }
+});
+
+   let typingTimeout;
+
+socket.on("userTyping", (username) => {
+  const typing = document.getElementById("typing");
+  
+  typing.innerText = username + " is typing...";
+
+  clearTimeout(typingTimeout);
+
+  typingTimeout = setTimeout(() => {
+    typing.innerText = "";
+  }, 5000);
+});
+  </script>
+</body>
+</html>
