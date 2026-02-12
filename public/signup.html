@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Signup</title>
+</head>
+<body>
+
+<h2>Signup</h2>
+
+<input id="username" placeholder="Username"><br><br>
+<input id="firstname" placeholder="First Name"><br><br>
+<input id="lastname" placeholder="Last Name"><br><br>
+<input id="password" type="password" placeholder="Password"><br><br>
+
+<button onclick="signup()">Signup</button>
+
+<br><br>
+<button onclick="goLogin()">Go to Login</button>
+
+<p id="message"></p>
+
+<script>
+async function signup() {
+  const user = {
+    username: document.getElementById("username").value,
+    firstname: document.getElementById("firstname").value,
+    lastname: document.getElementById("lastname").value,
+    password: document.getElementById("password").value
+  };
+
+  const res = await fetch("/signup", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(user)
+  });
+
+  const data = await res.json();
+  document.getElementById("message").innerText = data.message || data.error;
+
+  if (res.status === 201) {
+    setTimeout(() => {
+      window.location.href = "login.html";
+    }, 1000);
+  }
+}
+
+function goLogin() {
+  window.location.href = "login.html";
+}
+</script>
+
+</body>
+</html>

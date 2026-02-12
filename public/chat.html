@@ -4,48 +4,64 @@
   <title>Chat Room</title>
 </head>
 <body>
-  <h2>Chat App</h2>
 
-  <input id="username" placeholder="Username" />
-  <input id="room" placeholder="Room" />
-  <button onclick="joinRoom()">Join Room</button>
+<h2>Chat App</h2>
 
-  <div id="chat"></div>
+<button onclick="logout()">Logout</button>
 
-  <input id="message" placeholder="Message" />
-  <button onclick="sendMessage()">Send</button>
+<br><br>
 
-  <p id="typing"></p>
+<input id="room" placeholder="Room">
+<button onclick="joinRoom()">Join Room</button>
+<button onclick="leaveRoom()">Leave Room</button>
 
-  <script src="/socket.io/socket.io.js"></script>
-  <script>
-    const socket = io();
+<div id="chat"></div>
 
-    function joinRoom() {
-      const room = document.getElementById("room").value;
-      socket.emit("joinRoom", room);
-    }
+<br>
 
-    function sendMessage() {
-      const username = document.getElementById("username").value;
-      const room = document.getElementById("room").value;
-      const message = document.getElementById("message").value;
+<input id="message" placeholder="Message">
+<button onclick="sendMessage()">Send</button>
 
-      socket.emit("sendMessage", {
-        room,
-        username,
-        message
-      });
+<p id="typing"></p>
 
-      document.getElementById("message").value = "";
-    }
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  const socket = io();
+  const username = localStorage.getItem("username");
 
-    socket.on("receiveMessage", (data) => {
-      const chat = document.getElementById("chat");
-      chat.innerHTML += `<p><strong>${data.username}:</strong> ${data.message}</p>`;
+  if (!username) {
+    window.location.href = "login.html";
+  }
+
+  function logout() {
+    localStorage.removeItem("username");
+    window.location.href = "login.html";
+  }
+
+  function joinRoom() {
+    const room = document.getElementById("room").value;
+    socket.emit("joinRoom", room);
+  }
+
+  function leaveRoom() {
+    const room = document.getElementById("room").value;
+    socket.emit("leaveRoom", room);
+  }
+
+  function sendMessage() {
+    const room = document.getElementById("room").value;
+    const message = document.getElementById("message").value;
+
+    socket.emit("sendMessage", {
+      room,
+      username,
+      message
     });
 
-    socket.on("loadMessages", (messages) => {
+    document.getElementById("message").value = "";
+  }
+
+  socket.on("loadMessages", (messages) => {
   const chat = document.getElementById("chat");
   chat.innerHTML = "";
 
@@ -54,29 +70,33 @@
   });
 });
 
+  socket.on("receiveMessage", (data) => {
+    const chat = document.getElementById("chat");
+    chat.innerHTML += `<p><strong>${data.username}:</strong> ${data.message}</p>`;
+  });
 
   document.getElementById("message").addEventListener("input", () => {
-  const username = document.getElementById("username").value;
-  const room = document.getElementById("room").value;
-
-  if (username && room) {
+    const room = document.getElementById("room").value;
     socket.emit("typing", { room, username });
-  }
-});
+  });
 
-   let typingTimeout;
+  let typingTimeout;
 
-socket.on("userTyping", (username) => {
-  const typing = document.getElementById("typing");
-  
-  typing.innerText = username + " is typing...";
+  socket.on("userTyping", (user) => {
+    const typing = document.getElementById("typing");
+    typing.innerText = user + " is typing...";
+    clearTimeout(typingTimeout);
+    typingTimeout = setTimeout(() => {
+      typing.innerText = "";
+    }, 3000);
+  });
 
-  clearTimeout(typingTimeout);
+  socket.on("userLeft", (msg) => {
+    const chat = document.getElementById("chat");
+    chat.innerHTML += `<p><em>${msg}</em></p>`;
+  });
 
-  typingTimeout = setTimeout(() => {
-    typing.innerText = "";
-  }, 5000);
-});
-  </script>
+</script>
+
 </body>
 </html>

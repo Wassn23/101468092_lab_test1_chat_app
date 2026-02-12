@@ -16,6 +16,10 @@ app.use(express.static("public"));
 mongoose.connect("mongodb+srv://wassn_db_user:3LmyhuOw5jzOkMom@labtest1.ipw3ot8.mongodb.net/chatapp?retryWrites=true&w=majority")
   .then(() => console.log("MongoDB Connected"))
   .catch(err => console.log(err));
+  
+  app.get("/", (req, res) => {
+  res.redirect("/login.html");
+});
 
 app.post("/signup", async (req, res) => {
   try {
@@ -83,6 +87,10 @@ socket.on("joinRoom", async (room) => {
 
 });
 
+
+socket.on("leaveRoom", (room) => {
+  socket.leave(room);
+});
 
 
  socket.on("sendMessage", async (data) => {
